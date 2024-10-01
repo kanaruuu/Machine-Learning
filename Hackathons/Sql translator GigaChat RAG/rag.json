@@ -1,0 +1,653 @@
+[
+  {
+      "id": "1",
+      "title": "Различия между PL/pgSQL и PL/SQL",
+      "page": 1,
+      "keywords": ["PostgreSQL", "PL/pgSQL", "Oracle", "PL/SQL", "различия"],
+      "text": "В этом разделе рассматриваются различия между языками PostgreSQL PL/pgSQL и Oracle PL/SQL, чтобы помочь разработчикам, переносящим приложения из Oracle® в PostgreSQL."
+  },
+  {
+      "id": "2",
+      "title": "Основные отличия",
+      "page": 1,
+      "keywords": ["имя", "SQL-команда", "переменная", "неоднозначность"],
+      "text": "Если имя, используемое в SQL-команде, может быть как именем столбца таблицы, фигурирующей в команде, так и ссылкой на переменную функции, то PL/SQL считает, что это имя столбца таблицы. Однако PL/pgSQL по умолчанию выдаёт ошибку, сообщая о такой неоднозначности. Установив plpgsql.variable_conflict = use_column, это поведение можно поменять на принятое в PL/SQL и описанное в Подразделе 43.11.1. В первую очередь, было бы правильно избегать таких двусмысленностей, но если требуется портировать большое количество кода, зависящее от данного поведения, то установка переменной variable_conflict может быть лучшим решением."
+  },
+  {
+      "id": "3",
+      "title": "Запись тела функции",
+      "page": 1,
+      "keywords": ["функция", "строка", "кавычки"],
+      "text": "В PostgreSQL тело функции должно быть записано в виде строки. Поэтому нужно использовать знак доллара в качестве кавычек или экранировать одиночные кавычки в теле функции. (См. Подраздел 43.12.1.)"
+  },
+  {
+      "id": "4",
+      "title": "Типы данных",
+      "page": 1,
+      "keywords": ["тип данных", "varchar2", "varchar", "text", "number"],
+      "text": "Имена типов данных часто требуют корректировки. Например, в Oracle строковые значения часто объявляются с типом varchar2, не являющимся стандартным типом SQL. В PostgreSQL вместо него нужно использовать varchar или text. Подобным образом, тип number нужно заменять на numeric или другой числовой тип, если найдётся более подходящий."
+  },
+  {
+      "id": "5",
+      "title": "Группировка функций",
+      "page": 2,
+      "keywords": ["схемы", "функции", "пакеты"],
+      "text": "Для группировки функций вместо пакетов используются схемы. Так как пакетов нет, нет и пакетных переменных. Это несколько раздражает. Вместо этого можно хранить состояние каждого сеанса во временных таблицах."
+  },
+  {
+      "id": "6",
+      "title": "Целочисленные циклы FOR",
+      "page": 2,
+      "keywords": ["циклы FOR", "REVERSE", "портирование"],
+      "text": "Целочисленные циклы FOR с указанием REVERSE работают по-разному. В PL/SQL значение счётчика уменьшается от второго числа к первому, в то время как в PL/pgSQL счётчик уменьшается от первого ко второму. Поэтому при портировании нужно менять местами границы цикла. Это печально, но вряд ли будет изменено. (См. Подраздел 43.6.5.5.)"
+  },
+  {
+      "id": "7",
+      "title": "Циклы FOR по запросам",
+      "page": 2,
+      "keywords": ["цикл", "переменная", "недостаток"],
+      "text": "Циклы FOR по запросам (не курсорам) также работают по-разному. Переменная цикла должна быть объявлена, в то время как в PL/SQL она объявляется неявно. Преимущество в том, что значения переменных доступны и после выхода из цикла."
+  },
+  {
+      "id": "8",
+      "title": "Курсорные переменные",
+      "page": 2,
+      "keywords": ["курсоры", "переменные"],
+      "text": "Существуют некоторые отличия в нотации при использовании курсорных переменных."
+  },
+    {
+      "id": "9",
+      "title": "Функция Oracle PL/SQL",
+      "page": 3,
+      "keywords": ["портирование", "пример", "функция", "Oracle", "PL/SQL"],
+      "text": "Пример показывает, как портировать простую функцию из PL/SQL в PL/pgSQL. CREATE OR REPLACE FUNCTION cs_fmt_browser_version(v_name varchar2, v_version varchar2) RETURN varchar2 IS BEGIN IF v_version IS NULL THEN RETURN v_name; END IF; RETURN v_name || '/' || v_version; END; / show errors;"
+    },
+    {
+      "id": "10",
+      "title": "Различия при портировании",
+      "page": 3,
+      "keywords": ["различия", "varchar2", "RETURN", "IS", "LANGUAGE", "varchar", "text"],
+      "text": "Имя типа varchar2 нужно сменить на varchar или text. Ключевое слово RETURN в прототипе функции заменяется на RETURNS, IS становится AS. Необходимо добавить предложение LANGUAGE."
+    },
+    {
+      "id": "11",
+      "title": "Ключевое слово RETURN",
+      "page": 3,
+      "keywords": ["RETURN", "RETURNS", "IS", "AS", "LANGUAGE", "PL/pgSQL"],
+      "text": "Ключевое слово RETURN в прототипе функции (не в теле функции) заменяется на RETURNS в PostgreSQL. Кроме того, IS становится AS, и нужно добавить предложение LANGUAGE, потому что PL/pgSQL — не единственный возможный язык."
+    },
+    {
+      "id": "12",
+      "title": "Тело функции в PostgreSQL",
+      "page": 3,
+      "keywords": ["тело функции", "кавычки", "dollar quotes"],
+      "text": "В PostgreSQL тело функции является строкой, необходимо использовать кавычки или знаки доллара. Это заменяет завершающий / в подходе Oracle."
+    },
+    {
+      "id": "13",
+      "title": "Команда show errors",
+      "page": 3,
+      "keywords": ["show errors", "show", "errors"],
+      "text": "Команда show errors не существует в PostgreSQL и не требуется, так как ошибки будут выводиться автоматически."
+    },
+    {
+      "id": "14",
+      "title": "Портированная функция из Oracle в PostgreSQL",
+      "page": 3,
+      "keywords": ["портированная функция", "PL/pgSQL"],
+      "text": "Oracle: CREATE OR REPLACE FUNCTION cs_fmt_browser_version(v_name varchar2, v_version varchar2) RETURN varchar2 IS BEGIN IF v_version IS NULL THEN RETURN v_name; END IF; RETURN v_name || '/' || v_version; END; / show errors; PostgreSQL: CREATE OR REPLACE FUNCTION cs_fmt_browser_version(v_name varchar, v_version varchar) RETURNS varchar AS $$ BEGIN IF v_version IS NULL THEN RETURN v_name; END IF; RETURN v_name || '/' || v_version; END; $$ LANGUAGE plpgsql;"
+    },
+    {
+      "id": "15",
+      "title": "Пример 43.10: Портирование функции, создающей другую функцию",
+      "page": 4,
+      "keywords": ["портирование", "функция", "PL/SQL", "PL/pgSQL", "кавычки", "Пример 43.10"],
+      "text": "Пример показывает, как портировать функцию, которая создаёт другую функцию, и как обрабатывать проблемы с кавычками."
+    },
+    {
+      "id": "16",
+      "title": "Версия Oracle",
+      "page": 4,
+      "keywords": ["функция", "Oracle", "PL/SQL", "процедура"],
+      "text": "Следующая процедура получает строки из SELECT и строит большую функцию, в целях эффективности возвращающую результат в операторах IF. CREATE OR REPLACE PROCEDURE cs_update_referrer_type_proc IS CURSOR referrer_keys IS SELECT * FROM cs_referrer_keys ORDER BY try_order; func_cmd VARCHAR(4000); BEGIN func_cmd := 'CREATE OR REPLACE FUNCTION cs_find_referrer_type(v_host IN VARCHAR2, v_domain IN VARCHAR2, v_url IN VARCHAR2) RETURN VARCHAR2 IS BEGIN'; FOR referrer_key IN referrer_keys LOOP func_cmd := func_cmd || ' IF v_' || referrer_key.kind || ' LIKE ''' || referrer_key.key_string || ''' THEN RETURN ''' || referrer_key.referrer_type || '''; END IF;'; END LOOP; func_cmd := func_cmd || ' RETURN NULL; END;'; EXECUTE IMMEDIATE func_cmd; END; / show errors;"
+    },
+    {
+      "id": "17",
+      "title": "Портированная версия в PostgreSQL из Oracle",
+      "page": 4,
+      "keywords": ["Постгрес", "функция", "процедура"],
+      "text": "PostgreSQL: CREATE OR REPLACE PROCEDURE cs_update_referrer_type_proc() AS $func$ DECLARE referrer_keys CURSOR IS SELECT * FROM cs_referrer_keys ORDER BY try_order; func_body text; func_cmd text; BEGIN func_body := 'BEGIN'; FOR referrer_key IN referrer_keys LOOP func_body := func_body || ' IF v_' || referrer_key.kind || ' LIKE ' || quote_literal(referrer_key.key_string) || ' THEN RETURN ' || quote_literal(referrer_key.referrer_type) || '; END IF;'; END LOOP; func_body := func_body || ' RETURN NULL; END;'; func_cmd := 'CREATE OR REPLACE FUNCTION cs_find_referrer_type(v_host varchar, v_domain varchar, v_url varchar) RETURNS varchar AS ' || quote_literal(func_body) || ' LANGUAGE plpgsql;'; EXECUTE func_cmd; END; $func$ LANGUAGE plpgsql; Oracle: CREATE OR REPLACE PROCEDURE cs_update_referrer_type_proc IS CURSOR referrer_keys IS SELECT * FROM cs_referrer_keys ORDER BY try_order; func_cmd VARCHAR(4000); BEGIN func_cmd := 'CREATE OR REPLACE FUNCTION cs_find_referrer_type(v_host IN VARCHAR2, v_domain IN VARCHAR2, v_url IN VARCHAR2) RETURN VARCHAR2 IS BEGIN'; FOR referrer_key IN referrer_keys LOOP func_cmd := func_cmd || ' IF v_' || referrer_key.kind || ' LIKE ''' || referrer_key.key_string || ''' THEN RETURN ''' || referrer_key.referrer_type || '''; END IF;'; END LOOP; func_cmd := func_cmd || ' RETURN NULL; END;'; EXECUTE IMMEDIATE func_cmd; END; / show errors;"
+    },
+    {
+      "id": "18",
+      "title": "Техника построения тела функции",
+      "page": 5,
+      "keywords": ["quote_literal", "функция", "строительство"],
+      "text": "Обратите внимание, что тело функции строится отдельно с использованием quote_literal для дублирования кавычек. Эта техника необходима, так как мы не можем безопасно использовать знаки доллара при определении новой функции."
+    },
+    {
+      "id": "19",
+      "title": "Безопасность при генерации кода",
+      "page": 5,
+      "keywords": ["безопасность", "код", "знаки доллара"],
+      "text": "Мы не знаем точно, какие строки будут вставлены из referrer_key.key_string, а referrer_key.kind предполагается всегда в значении из списка: host, domain или url. Однако referrer_key.key_string может содержать знаки доллара, что делает использование quote_literal критически важным."
+    },
+    {
+      "id": "20",
+      "title": "Улучшение по сравнению с Oracle",
+      "page": 5,
+      "keywords": ["улучшение", "Oracle", "надежность"],
+      "text": "В этой функции есть улучшение по сравнению с оригиналом Oracle, так как не будет генерироваться неправильный код, когда referrer_key.key_string или referrer_key.referrer_type содержат кавычки."
+    },
+    {
+      "id": "21",
+      "title": "Пример 43.11: Портирование функции с выходными параметрами",
+      "page": 6,
+      "keywords": ["портирование", "функция", "выходные параметры", "строки"],
+      "text": "Пример показывает, как портировать процедуру из PL/SQL, которая разбирает URL и возвращает его составляющие (сервер, путь и запрос). Версия Oracle: CREATE OR REPLACE PROCEDURE cs_parse_url( v_url IN VARCHAR2, v_host OUT VARCHAR2, -- Возвращается как результат v_path OUT VARCHAR2, -- И это тоже v_query OUT VARCHAR2) -- И это IS a_pos1 INTEGER; a_pos2 INTEGER; BEGIN v_host := NULL; v_path := NULL; v_query := NULL; a_pos1 := instr(v_url, '//'); IF a_pos1 = 0 THEN RETURN; END IF; a_pos2 := instr(v_url, '/', a_pos1 + 2); IF a_pos2 = 0 THEN v_host := substr(v_url, a_pos1 + 2); v_path := '/'; RETURN; END IF; v_host := substr(v_url, a_pos1 + 2, a_pos2 - a_pos1 - 2); a_pos1 := instr(v_url, '?', a_pos2 + 1); IF a_pos1 = 0 THEN v_path := substr(v_url, a_pos2); RETURN; END IF; v_path := substr(v_url, a_pos2, a_pos1 - a_pos2); v_query := substr(v_url, a_pos1 + 1); END; / show errors; Вот возможная трансляция в PL/pgSQL: CREATE OR REPLACE FUNCTION cs_parse_url( v_url IN VARCHAR, v_host OUT VARCHAR, -- Возвращается как результат v_path OUT VARCHAR, -- И это тоже v_query OUT VARCHAR) -- И это AS $$ DECLARE a_pos1 INTEGER; a_pos2 INTEGER; BEGIN v_host := NULL; v_path := NULL; v_query := NULL; a_pos1 := instr(v_url, '//'); IF a_pos1 = 0 THEN RETURN; END IF; a_pos2 := instr(v_url, '/', a_pos1 + 2); IF a_pos2 = 0 THEN v_host := substr(v_url, a_pos1 + 2); v_path := '/'; RETURN; END IF; v_host := substr(v_url, a_pos1 + 2, a_pos2 - a_pos1 - 2); a_pos1 := instr(v_url, '?', a_pos2 + 1); IF a_pos1 = 0 THEN v_path := substr(v_url, a_pos2); RETURN; END IF; v_path := substr(v_url, a_pos2, a_pos1 - a_pos2); v_query := substr(v_url, a_pos1 + 1); END; $$ LANGUAGE plpgsql;"
+    },
+    {
+      "id": "22",
+      "title": "Версия Oracle",
+      "page": 6,
+      "keywords": ["Oracle", "PL/SQL", "параметры"],
+      "text": "CREATE OR REPLACE PROCEDURE cs_parse_url( v_url IN VARCHAR2, v_host OUT VARCHAR2, v_path OUT VARCHAR2, v_query OUT VARCHAR2) IS a_pos1 INTEGER; a_pos2 INTEGER; BEGIN v_host := NULL; v_path := NULL; v_query := NULL; a_pos1 := instr(v_url, '//'); IF a_pos1 = 0 THEN RETURN; END IF; a_pos2 := instr(v_url, '/', a_pos1 + 2); IF a_pos2 = 0 THEN v_host := substr(v_url, a_pos1 + 2); v_path := '/'; RETURN; END IF; v_host := substr(v_url, a_pos1 + 2, a_pos2 - a_pos1 - 2); a_pos1 := instr(v_url, '?', a_pos2 + 1); IF a_pos1 = 0 THEN v_path := substr(v_url, a_pos2); RETURN; END IF; v_path := substr(v_url, a_pos2, a_pos1 - a_pos2); v_query := substr(v_url, a_pos1 + 1); END; / show errors;"
+    },
+    {
+      "id": "23",
+      "title": "Портированная версия в PL/pgSQL",
+      "page": 6,
+      "keywords": ["PL/pgSQL", "функция", "выходные параметры"],
+      "text": "CREATE OR REPLACE FUNCTION cs_parse_url( v_url IN VARCHAR, v_host OUT VARCHAR, v_path OUT VARCHAR, v_query OUT VARCHAR) AS $$ DECLARE a_pos1 INTEGER; a_pos2 INTEGER; BEGIN v_host := NULL; v_path := NULL; v_query := NULL; a_pos1 := instr(v_url, '//'); IF a_pos1 = 0 THEN RETURN; END IF; a_pos2 := instr(v_url, '/', a_pos1 + 2); IF a_pos2 = 0 THEN v_host := substr(v_url, a_pos1 + 2); v_path := '/'; RETURN; END IF; v_host := substr(v_url, a_pos1 + 2, a_pos2 - a_pos1 - 2); a_pos1 := instr(v_url, '?', a_pos2 + 1); IF a_pos1 = 0 THEN v_path := substr(v_url, a_pos2); RETURN; END IF; v_path := substr(v_url, a_pos2, a_pos1 - a_pos2); v_query := substr(v_url, a_pos1 + 1); END; $$ LANGUAGE plpgsql;"
+    },
+    {
+      "id": "24",
+      "title": "Использование функции",
+      "page": 7,
+      "keywords": ["использование", "функция", "пример"],
+      "text": "Эту функцию можно использовать так: SELECT * FROM cs_parse_url('http://foobar.com/query.cgi?baz');"
+    },
+    {
+      "id": "25",
+      "title": "Создание функции instr",
+      "page": 7,
+      "keywords": ["instr", "функция", "PL/pgSQL"],
+      "text": "В PostgreSQL нет встроенной функции instr, но её можно создать, используя комбинацию других функций. См. Подраздел 43.13.3 для реализации instr на PL/pgSQL."
+    },
+    {
+      "id": "26",
+      "title": "Пример 43.12: Портирование процедуры с специфическими возможностями Oracle",
+      "page": 7,
+      "keywords": ["портирование", "процедура", "специфика Oracle"],
+      "text": "Пример показывает, как портировать процедуру из PL/SQL, использующую специфические для Oracle возможности. Версия Oracle: CREATE OR REPLACE PROCEDURE cs_create_job(v_job_id IN INTEGER) IS a_running_job_count INTEGER; BEGIN LOCK TABLE cs_jobs IN EXCLUSIVE MODE; SELECT count(*) INTO a_running_job_count FROM cs_jobs WHERE end_stamp IS NULL; IF a_running_job_count > 0 THEN COMMIT; -- освободить блокировку raise_application_error(-20000, 'Unable to create a new job: a job is currently running.'); END IF; DELETE FROM cs_active_job; INSERT INTO cs_active_job(job_id) VALUES (v_job_id); BEGIN INSERT INTO cs_jobs (job_id, start_stamp) VALUES (v_job_id, now()); EXCEPTION WHEN dup_val_on_index THEN NULL; -- ничего не делать, если задание уже есть END; COMMIT; END; / show errors Вот как эту процедуру можно переписать на PL/pgSQL: CREATE OR REPLACE PROCEDURE cs_create_job(v_job_id integer) AS $$ DECLARE a_running_job_count integer; BEGIN LOCK TABLE cs_jobs IN EXCLUSIVE MODE; SELECT count(*) INTO a_running_job_count FROM cs_jobs WHERE end_stamp IS NULL; IF a_running_job_count > 0 THEN COMMIT; -- освободить блокировку RAISE EXCEPTION 'Unable to create a new job: a job is currently running'; -- (1) END IF; DELETE FROM cs_active_job; INSERT INTO cs_active_job(job_id) VALUES (v_job_id); BEGIN INSERT INTO cs_jobs (job_id, start_stamp) VALUES (v_job_id, now()); EXCEPTION WHEN unique_violation THEN -- (2) -- ничего не делать, если задание уже есть END; COMMIT; END; $$ LANGUAGE plpgsql;"
+    },
+    {
+      "id": "27",
+      "title": "Версия Oracle",
+      "page": 7,
+      "keywords": ["Oracle", "PL/SQL", "процедура"],
+      "text": "CREATE OR REPLACE PROCEDURE cs_create_job(v_job_id IN INTEGER) IS a_running_job_count INTEGER; BEGIN LOCK TABLE cs_jobs IN EXCLUSIVE MODE; SELECT count(*) INTO a_running_job_count FROM cs_jobs WHERE end_stamp IS NULL; IF a_running_job_count > 0 THEN COMMIT; raise_application_error(-20000, 'Unable to create a new job: a job is currently running.'); END IF; DELETE FROM cs_active_job; INSERT INTO cs_active_job(job_id) VALUES (v_job_id); BEGIN INSERT INTO cs_jobs (job_id, start_stamp) VALUES (v_job_id, now()); EXCEPTION WHEN dup_val_on_index THEN NULL; END; COMMIT; END; / show errors;"
+    },
+    {
+      "id": "28",
+      "title": "Портированная версия в PL/pgSQL",
+      "page": 7,
+      "keywords": ["PL/pgSQL", "процедура", "исключения"],
+      "text": "CREATE OR REPLACE PROCEDURE cs_create_job(v_job_id integer) AS $$ DECLARE a_running_job_count integer; BEGIN LOCK TABLE cs_jobs IN EXCLUSIVE MODE; SELECT count(*) INTO a_running_job_count FROM cs_jobs WHERE end_stamp IS NULL; IF a_running_job_count > 0 THEN COMMIT; RAISE EXCEPTION 'Unable to create a new job: a job is currently running'; END IF; DELETE FROM cs_active_job; INSERT INTO cs_active_job(job_id) VALUES (v_job_id); BEGIN INSERT INTO cs_jobs (job_id, start_stamp) VALUES (v_job_id, now()); EXCEPTION WHEN unique_violation THEN NULL; END; COMMIT; END; $$ LANGUAGE plpgsql;"
+    },
+    {
+      "id": "29",
+      "title": "Различия в синтаксисе RAISE",
+      "page": 7,
+      "keywords": ["RAISE", "исключения", "синтаксис"],
+      "text": "Синтаксис RAISE существенно отличается от Oracle, хотя основной вариант RAISE имя_исключения работает похоже."
+    },
+    {
+      "id": "30",
+      "title": "Имена исключений в PL/pgSQL",
+      "page": 7,
+      "keywords": ["исключения", "PL/pgSQL", "уникальное нарушение"],
+      "text": "Имена исключений, поддерживаемые PL/pgSQL, отличаются от исключений в Oracle. В настоящее время нет способа задать пользовательское имя исключения, но можно вызывать ошибку с заданным пользователем значением SQLSTATE."
+    },
+    {
+      "id": "31",
+      "title": "43.13.2: На что ещё обратить внимание",
+      "page": 8,
+      "keywords": ["портирование", "функции", "Oracle PL/SQL", "PostgreSQL"],
+      "text": "В этом разделе рассматриваются ещё несколько вещей, на которые нужно обращать внимание при портировании функций из Oracle PL/SQL в PostgreSQL."
+    },
+    {
+      "id": "32",
+      "title": "Неявный откат изменений после возникновения исключения",
+      "page": 9,
+      "keywords": ["неявный откат", "исключения", "PL/pgSQL", "Oracle"],
+      "text": "В PL/pgSQL при перехвате исключения в секции EXCEPTION все изменения в базе данных с начала блока автоматически откатываются. В Oracle это эквивалентно следующему: BEGIN SAVEPOINT s1; ... здесь код ... EXCEPTION WHEN ... THEN ROLLBACK TO s1; ... здесь код ... END;"
+    },
+    {
+      "id": "33",
+      "title": "Портирование процедур с использованием SAVEPOINT и ROLLBACK TO",
+      "page": 9,
+      "keywords": ["SAVEPOINT", "ROLLBACK TO", "портирование"],
+      "text": "При портировании процедуры Oracle, которая использует SAVEPOINT и ROLLBACK TO в таком же стиле, задача проста: достаточно убрать операторы SAVEPOINT и ROLLBACK TO. Если же они используются по-другому, потребуется дополнительное обдумывание."
+    },
+    {
+      "id": "34",
+      "title": "43.13.2.2: EXECUTE",
+      "page": 9,
+      "keywords": ["EXECUTE", "PL/pgSQL", "PL/SQL"],
+      "text": "PL/pgSQL версия EXECUTE работает аналогично версии в PL/SQL, но нужно помнить об использовании quote_literal и quote_ident, как описано в Подразделе 43.5.4. Без использования этих функций конструкции типа EXECUTE 'SELECT * FROM $1'; будут работать ненадёжно."
+    },
+    {
+      "id": "35",
+      "title": "43.13.2.3: Оптимизация функций на PL/pgSQL",
+      "page": 10,
+      "keywords": ["оптимизация", "функции", "PL/pgSQL"],
+      "text": "Для оптимизации исполнения PostgreSQL предоставляет два модификатора при создании функции: «изменчивость» и «строгость». Для получения подробной информации обратитесь к справочной странице CREATE FUNCTION."
+    },
+    {
+      "id": "36",
+      "title": "Пример оператора CREATE FUNCTION с атрибутами оптимизации",
+      "page": 10,
+      "keywords": ["CREATE FUNCTION", "оптимизация"],
+      "text": "При использовании этих атрибутов оптимизации оператор CREATE FUNCTION может выглядеть примерно так: CREATE FUNCTION foo(...) RETURNS integer AS $$ ... $$ LANGUAGE plpgsql STRICT IMMUTABLE;"
+    },
+    {
+      "id": "37",
+      "title": "Пример 1: Простое создание таблицы",
+      "page": 10,
+      "keywords": ["создание таблицы", "PL/SQL", "PostgreSQL"],
+      "text": "PL/SQL (Oracle): CREATE TABLE employees (\n    employee_id NUMBER PRIMARY KEY,\n    first_name VARCHAR2(50),\n    last_name VARCHAR2(50),\n    hire_date DATE\n); \n\nPostgreSQL (pgSQL): CREATE TABLE employees (\n    employee_id SERIAL PRIMARY KEY,\n    first_name VARCHAR(50),\n    last_name VARCHAR(50),\n    hire_date DATE\n); \n\nОбъяснение: В Oracle тип данных NUMBER используется для числовых значений, в PostgreSQL для автоматической генерации идентификаторов применяется тип SERIAL. В Oracle используется VARCHAR2, в PostgreSQL эквивалентом является VARCHAR."
+    },
+    {
+      "id": "38",
+      "title": "Пример 2: Процедура с параметрами",
+      "page": 11,
+      "keywords": ["процедура", "PL/SQL", "PostgreSQL"],
+      "text": "PL/SQL (Oracle): CREATE OR REPLACE PROCEDURE add_employee (\n    p_first_name IN VARCHAR2,\n    p_last_name IN VARCHAR2,\n    p_hire_date IN DATE\n) AS\nBEGIN\n    INSERT INTO employees (first_name, last_name, hire_date)\n    VALUES (p_first_name, p_last_name, p_hire_date);\nEND; \n\nPostgreSQL (pgSQL): CREATE OR REPLACE FUNCTION add_employee(\n    p_first_name VARCHAR,\n    p_last_name VARCHAR,\n    p_hire_date DATE\n) RETURNS VOID AS $$\nBEGIN\n    INSERT INTO employees (first_name, last_name, hire_date)\n    VALUES (p_first_name, p_last_name, p_hire_date);\nEND;\n$$ LANGUAGE plpgsql; \n\nОбъяснение: В PL/SQL используется PROCEDURE, в PostgreSQL аналогично применяют FUNCTION с возвращаемым типом VOID. LANGUAGE plpgsql указывает, что функция написана на языке PL/pgSQL, который аналогичен PL/SQL."
+    },
+    {
+      "id": "39",
+      "title": "Пример 3: Использование курсора",
+      "page": 11,
+      "keywords": ["курсоры", "PL/SQL", "PostgreSQL"],
+      "text": "PL/SQL (Oracle): DECLARE\n    CURSOR emp_cursor IS\n        SELECT first_name, last_name FROM employees;\n    v_employee employees%ROWTYPE;\nBEGIN\n    OPEN emp_cursor;\n    LOOP\n        FETCH emp_cursor INTO v_employee;\n        EXIT WHEN emp_cursor%NOTFOUND;\n        DBMS_OUTPUT.PUT_LINE(v_employee.first_name || ' ' || v_employee.last_name);\n    END LOOP;\n    CLOSE emp_cursor;\nEND; \n\nPostgreSQL (pgSQL): DO $$\nDECLARE\n    emp_cursor CURSOR FOR\n        SELECT first_name, last_name FROM employees;\n    v_employee RECORD;\nBEGIN\n    OPEN emp_cursor;\n    LOOP\n        FETCH emp_cursor INTO v_employee;\n        EXIT WHEN NOT FOUND;\n        RAISE NOTICE '% %', v_employee.first_name, v_employee.last_name;\n    END LOOP;\n    CLOSE emp_cursor;\nEND;\n$$ LANGUAGE plpgsql; \n\nОбъяснение: В PL/SQL используется DBMS_OUTPUT.PUT_LINE для вывода данных, в PostgreSQL аналогичной функцией является RAISE NOTICE. Тип RECORD в PostgreSQL аналогичен %ROWTYPE в Oracle."
+    },
+    {
+      "id": "40",
+      "title": "Пример 4: Обработка исключений",
+      "page": 12,
+      "keywords": ["обработка исключений", "PL/SQL", "PostgreSQL"],
+      "text": "PL/SQL (Oracle): BEGIN\n    -- Попытка вставить запись\n    INSERT INTO employees (employee_id, first_name, last_name, hire_date)\n    VALUES (1, 'John', 'Doe', SYSDATE);\nEXCEPTION\n    WHEN DUP_VAL_ON_INDEX THEN\n        DBMS_OUTPUT.PUT_LINE('Ошибка: Дублирующее значение в индексе.');\n    WHEN OTHERS THEN\n        DBMS_OUTPUT.PUT_LINE('Ошибка: ' || SQLERRM);\nEND; \n\nPostgreSQL (pgSQL): DO $$\nBEGIN\n    BEGIN\n        -- Попытка вставить запись\n        INSERT INTO employees (employee_id, first_name, last_name, hire_date)\n        VALUES (1, 'John', 'Doe', CURRENT_DATE);\n    EXCEPTION\n        WHEN unique_violation THEN\n            RAISE NOTICE 'Ошибка: Дублирующее значение в индексе.';\n        WHEN OTHERS THEN\n            RAISE NOTICE 'Ошибка: %', SQLERRM;\n    END;\nEND;\n$$ LANGUAGE plpgsql; \n\nОбъяснение: В PL/SQL используется EXCEPTION для обработки ошибок, в PostgreSQL EXCEPTION внутри блока BEGIN ... END. В PostgreSQL для уникальных нарушений используется unique_violation, в Oracle это DUP_VAL_ON_INDEX."
+    },
+    {
+      "id": "41",
+      "title": "Пример 5: Создание триггера",
+      "page": 13,
+      "keywords": ["триггеры", "PL/SQL", "PostgreSQL"],
+      "text": "PL/SQL (Oracle): CREATE OR REPLACE TRIGGER before_employee_insert\nBEFORE INSERT ON employees\nFOR EACH ROW\nBEGIN\n    :NEW.hire_date := SYSDATE;\nEND; \n\nPostgreSQL (pgSQL): CREATE OR REPLACE FUNCTION set_hire_date()\nRETURNS TRIGGER AS $$\nBEGIN\n    NEW.hire_date := CURRENT_DATE;\n    RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;\n\nCREATE TRIGGER before_employee_insert\nBEFORE INSERT ON employees\nFOR EACH ROW\nEXECUTE FUNCTION set_hire_date(); \n\nОбъяснение: В PL/SQL триггер устанавливается непосредственно с помощью BEGIN ... END блока. В PostgreSQL сначала создается функция триггера, а затем сам триггер, который вызывает эту функцию."
+    },
+    {
+      "id": "42",
+      "title": "Пример 6: Пакеты и их использование",
+      "page": 14,
+      "keywords": ["пакеты", "PL/SQL", "PostgreSQL"],
+      "text": "PL/SQL (Oracle): CREATE OR REPLACE PACKAGE emp_pkg AS\n    PROCEDURE add_employee(p_first_name IN VARCHAR2, p_last_name IN VARCHAR2);\nEND emp_pkg;\n\nCREATE OR REPLACE PACKAGE BODY emp_pkg AS\n    PROCEDURE add_employee(p_first_name IN VARCHAR2, p_last_name IN VARCHAR2) IS\n    BEGIN\n        INSERT INTO employees (first_name, last_name, hire_date)\n        VALUES (p_first_name, p_last_name, SYSDATE);\n    END add_employee;\nEND emp_pkg; \n\nPostgreSQL (pgSQL): -- Создание функции для вставки данных\nCREATE OR REPLACE FUNCTION add_employee(p_first_name VARCHAR, p_last_name VARCHAR) \nRETURNS VOID AS $$\nBEGIN\n    INSERT INTO employees (first_name, last_name, hire_date)\n    VALUES (p_first_name, p_last_name, CURRENT_DATE);\nEND;\n$$ LANGUAGE plpgsql;\n\n-- Вызов функции\nSELECT add_employee('John', 'Doe');\n\nОбъяснение: В Oracle можно создавать пакеты и тела пакетов для организации процедур и функций. В PostgreSQL функции можно организовывать в схемах, но нет концепции пакетов как в Oracle."
+    },
+    {
+      "id": "43",
+      "title": "Пример 7: Временные таблицы",
+      "page": 15,
+      "keywords": ["временные таблицы", "PL/SQL", "PostgreSQL"],
+      "text": "PL/SQL (Oracle): BEGIN\n    EXECUTE IMMEDIATE 'CREATE GLOBAL TEMPORARY TABLE temp_employees (\n        employee_id NUMBER,\n        first_name VARCHAR2(50)\n    ) ON COMMIT DELETE ROWS';\n\n    -- Вставка данных во временную таблицу\n    INSERT INTO temp_employees (employee_id, first_name) VALUES (1, 'John');\nEND; \n\nPostgreSQL (pgSQL): DO $$\nBEGIN\n    -- Создание временной таблицы\n    CREATE TEMPORARY TABLE temp_employees (\n        employee_id SERIAL,\n        first_name VARCHAR(50)\n    );\n\n    -- Вставка данных во временную таблицу\n    INSERT INTO temp_employees (first_name) VALUES ('John');\nEND;\n$$ LANGUAGE plpgsql; \n\nОбъяснение: В Oracle глобальные временные таблицы создаются с помощью EXECUTE IMMEDIATE, и данные можно удалить при коммите. В PostgreSQL используются временные таблицы, создаваемые непосредственно в блоке кода, и они автоматически удаляются при завершении сессии."
+    },
+    {
+      "id": "44",
+      "title": "Пример 8: Использование динамического SQL",
+      "page": 16,
+      "keywords": ["динамический SQL", "PL/SQL", "PostgreSQL"],
+      "text": "PL/SQL (Oracle): DECLARE\n    v_sql VARCHAR2(200);\nBEGIN\n    v_sql := 'INSERT INTO employees (first_name, last_name) VALUES (''Jane'', ''Smith'')';\n    EXECUTE IMMEDIATE v_sql;\nEND; \n\nPostgreSQL (pgSQL): DO $$\nDECLARE\n    v_sql TEXT;\nBEGIN\n    v_sql := 'INSERT INTO employees (first_name, last_name) VALUES (''Jane'', ''Smith'')';\n    EXECUTE v_sql;\nEND;\n$$ LANGUAGE plpgsql; \n\nОбъяснение: В обоих случаях используется динамический SQL. В Oracle тип VARCHAR2 и функция EXECUTE IMMEDIATE, в PostgreSQL тип TEXT и также функция EXECUTE."
+    },
+    {
+      "id": "45",
+      "title": "Пример 9: Создание пользовательского типа",
+      "page": 17,
+      "keywords": ["пользовательские типы", "PL/SQL", "PostgreSQL"],
+      "text": "PL/SQL (Oracle): CREATE OR REPLACE TYPE employee_type AS OBJECT (\n    employee_id NUMBER,\n    first_name VARCHAR2(50),\n    last_name VARCHAR2(50)\n);\n\nCREATE OR REPLACE PROCEDURE show_employee(emp IN employee_type) IS\nBEGIN\n    DBMS_OUTPUT.PUT_LINE(emp.first_name || ' ' || emp.last_name);\nEND; \n\nPostgreSQL (pgSQL): CREATE TYPE employee_type AS (\n    employee_id INTEGER,\n    first_name VARCHAR(50),\n    last_name VARCHAR(50)\n);\n\nCREATE OR REPLACE FUNCTION show_employee(emp employee_type) \nRETURNS VOID AS $$\nBEGIN\n    RAISE NOTICE '% %', emp.first_name, emp.last_name;\nEND;\n$$ LANGUAGE plpgsql; \n\nОбъяснение: В Oracle создаются объектные типы с помощью CREATE TYPE ... AS OBJECT, в PostgreSQL можно создать составные типы с помощью CREATE TYPE ... AS."
+    },
+    {
+      "id": "46",
+      "title": "Пример 10: Использование курсора с параметрами",
+      "page": 18,
+      "keywords": ["курсоры с параметрами", "PL/SQL", "PostgreSQL"],
+      "text": "PL/SQL (Oracle): DECLARE\n    CURSOR emp_cursor(p_dept_id NUMBER) IS\n        SELECT first_name, last_name FROM employees WHERE department_id = p_dept_id;\n    v_employee employees%ROWTYPE;\nBEGIN\n    OPEN emp_cursor(10);\n    LOOP\n        FETCH emp_cursor INTO v_employee;\n        EXIT WHEN emp_cursor%NOTFOUND;\n        DBMS_OUTPUT.PUT_LINE(v_employee.first_name || ' ' || v_employee.last_name);\n    END LOOP;\n    CLOSE emp_cursor;\nEND; \n\nPostgreSQL (pgSQL): DO $$\nDECLARE\n    CURSOR emp_cursor(p_dept_id INTEGER) FOR\n        SELECT first_name, last_name FROM employees WHERE department_id = p_dept_id;\n    v_employee RECORD;\nBEGIN\n    OPEN emp_cursor(10);\n    LOOP\n        FETCH emp_cursor INTO v_employee;\n        EXIT WHEN NOT FOUND;\n        RAISE NOTICE '% %', v_employee.first_name, v_employee.last_name;\n    END LOOP;\n    CLOSE emp_cursor;\nEND;\n$$ LANGUAGE plpgsql; \n\nОбъяснение: В обоих случаях используются курсоры с параметрами, OPEN emp_cursor(10) для передачи параметра в курсор."
+    },
+    {
+      "id": "47",
+      "title": "Пример 11: Рекурсивные запросы",
+      "page": 19,
+      "keywords": ["рекурсивные запросы", "PL/SQL", "PostgreSQL"],
+      "text": "PL/SQL (Oracle): WITH RECURSIVE org_chart AS (\n    SELECT employee_id, manager_id, first_name, last_name\n    FROM employees\n    WHERE manager_id IS NULL\n    UNION ALL\n    SELECT e.employee_id, e.manager_id, e.first_name, e.last_name\n    FROM employees e\n    INNER JOIN org_chart o ON e.manager_id = o.employee_id\n)\nSELECT * FROM org_chart; \n\nPostgreSQL (pgSQL): WITH RECURSIVE org_chart AS (\n    SELECT employee_id, manager_id, first_name, last_name\n    FROM employees\n    WHERE manager_id IS NULL\n    UNION ALL\n    SELECT e.employee_id, e.manager_id, e.first_name, e.last_name\n    FROM employees e\n    INNER JOIN org_chart o ON e.manager_id = o.employee_id\n)\nSELECT * FROM org_chart; \n\nОбъяснение: Рекурсивные запросы используются для построения иерархических структур. Синтаксис идентичен в Oracle и PostgreSQL."
+    },
+    {
+      "id": "48",
+      "title": "Пример 12: Пользовательские исключения",
+      "page": 20,
+      "keywords": ["пользовательские исключения", "PL/SQL", "PostgreSQL"],
+      "text": "PL/SQL (Oracle): CREATE TABLE customers (\n    id INTEGER,\n    name VARCHAR2(100),\n    address VARCHAR2(2000)\n);\n\nINSERT INTO customers VALUES(1, 'Тестовый пользователь 1', 'Тестовый адрес 1');\nINSERT INTO customers VALUES(2, 'Тестовый пользователь 2', 'Тестовый адрес 2');\nINSERT INTO customers VALUES(3, 'Тестовый пользователь 3', 'Тестовый адрес 3');\n\nALTER TABLE customers ADD CONSTRAINT customers_pk PRIMARY KEY (id);\n\nDECLARE\n    c_id customers.id%type := &cc_id;\n    c_name customers.name%type;\n    c_addr customers.address%type;\n    ex_invalid_id EXCEPTION; \nBEGIN\n    IF c_id <= 0 THEN\n        RAISE ex_invalid_id;\n    END IF;\n    SELECT c.name, c.address INTO c_name, c_addr FROM customers c WHERE c.id = c_id;\n    dbms_output.put_line('Имя: '|| c_name);  \n    dbms_output.put_line('Адрес: ' || c_addr);  \nEXCEPTION\n    WHEN ex_invalid_id THEN\n        dbms_output.put_line('Идентификатор клиента не может быть отрицательным');\n    WHEN no_data_found THEN\n        dbms_output.put_line('Клиент не найден');\nEND; \n\nPostgreSQL (pgSQL): CREATE TABLE customers (\n    id bigint,\n    name VARCHAR(100),\n    address VARCHAR(2000)\n);\n\nINSERT INTO customers VALUES(1, 'Тестовый пользователь 1', 'Тестовый адрес 1');\nINSERT INTO customers VALUES(2, 'Тестовый пользователь 2', 'Тестовый адрес 2');\nINSERT INTO customers VALUES(3, 'Тестовый пользователь 3', 'Тестовый адрес 3');\n\nALTER TABLE customers ADD CONSTRAINT customers_pk PRIMARY KEY (id);\n\nDO\n$$\nDECLARE\n    c_id customers.id%type := 5;\n    c_name customers.name%type;\n    c_addr customers.address%type;\nBEGIN\n    IF c_id <= 0 THEN\n        RAISE EXCEPTION USING errcode = '06502';\n    END IF;\n    SELECT c.name, c.address INTO STRICT c_name, c_addr FROM customers c WHERE c.id = c_id;\n    RAISE NOTICE 'Имя: %', c_name;\n    RAISE NOTICE 'Адрес: %', c_addr;\nEXCEPTION\n    WHEN no_data_found THEN\n        RAISE NOTICE 'Клиент не найден';\nEND;\n$$\nLANGUAGE plpgsql;\n"
+    },
+    {
+      "id": "49",
+      "title": "Пример 13: Операторы MERGE, INSERT FIRST и INSERT ALL",
+      "page": 21,
+      "keywords": ["MERGE", "INSERT FIRST", "INSERT ALL", "PL/SQL", "PostgreSQL"],
+      "text": "PL/SQL (Oracle): CREATE TABLE members (\n    member_id NUMBER PRIMARY KEY,\n    first_name VARCHAR2(50) NOT NULL,\n    last_name VARCHAR2(50) NOT NULL,\n    rank VARCHAR2(20)\n);\n\nCREATE TABLE member_staging AS SELECT * FROM members;\n\nINSERT INTO members(member_id, first_name, last_name, rank) VALUES(1, 'Имя1', 'Фамилия1', 'Золото');\nINSERT INTO members(member_id, first_name, last_name, rank) VALUES(2, 'Имя2', 'Фамилия2', 'Платина');\nINSERT INTO member_staging(member_id, first_name, last_name, rank) VALUES(1, 'Имя1', 'Фамилия1', 'Золото1');\nINSERT INTO member_staging(member_id, first_name, last_name, rank) VALUES(2, 'Имя2', 'Фамилия2', 'Платина1');\nINSERT INTO member_staging(member_id, first_name, last_name, rank) VALUES(3, 'Имя3', 'Фамилия3', 'Серебро1');\n\nMERGE INTO member_staging x USING (SELECT member_id, first_name, last_name, rank FROM members) y ON (x.member_id = y.member_id)\nWHEN MATCHED THEN\n    UPDATE SET x.first_name = y.first_name, x.last_name = y.last_name, x.rank = y.rank\nWHERE x.first_name <> y.first_name OR x.last_name <> y.last_name OR x.rank <> y.rank\nWHEN NOT MATCHED THEN\n    INSERT (x.member_id, x.first_name, x.last_name, x.rank) VALUES (y.member_id, y.first_name, y.last_name, y.rank);\n\nPostgreSQL (pgSQL): CREATE TABLE members (\n    member_id bigint,\n    first_name VARCHAR(50) NOT NULL,\n    last_name VARCHAR(50) NOT NULL,\n    rank VARCHAR(20)\n);\n\nCREATE TABLE member_staging (member_id bigint, first_name VARCHAR(50) NOT NULL, last_name VARCHAR(50) NOT NULL, rank VARCHAR(20));\n\nINSERT INTO members(member_id, first_name, last_name, rank) VALUES(1, 'Имя1', 'Фамилия1', 'Золото');\nINSERT INTO members(member_id, first_name, last_name, rank) VALUES(2, 'Имя2', 'Фамилия2', 'Платина');\nINSERT INTO member_staging(member_id, first_name, last_name, rank) VALUES(1, 'Имя1', 'Фамилия1', 'Золото1');\nINSERT INTO member_staging(member_id, first_name, last_name, rank) VALUES(2, 'Имя2', 'Фамилия2', 'Платина1');\nINSERT INTO member_staging(member_id, first_name, last_name, rank) VALUES(3, 'Имя3', 'Фамилия3', 'Серебро1');\n\nALTER TABLE members ADD CONSTRAINT members_pk PRIMARY KEY(member_id);\n\nINSERT INTO member_staging AS x\nSELECT m.member_id, m.first_name, m.last_name, m.rank FROM members m ON CONFLICT (member_id) DO UPDATE SET first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, rank = EXCLUDED.rank;\n\nОбъяснение: В PostgreSQL с версии 15 появился оператор MERGE, ранее вместо него применялся INSERT ON CONFLICT DO UPDATE. Также в Oracle используется конструкция INSERT ALL для вставки данных в несколько таблиц за один запрос."
+    },
+    {
+      "id": "50",
+      "title": "VARRAY и массив строк",
+      "page": 21,
+      "keywords": ["VARRAY", "массив строк", "массив", "строк", "PostgreSQL"],
+      "text": "В PostgreSQL нет определения VARRAY, вместо этого можно использовать массив строк. Пример такого использования: team text[] := ARRAY['John', 'Bob', 'Ann', 'Michael']; Полный запрос для понимания контекста выглядит следующим образом на языке PostgreSQL: DO $$ DECLARE -- Используем массив строк вместо VARRAY team text[] := ARRAY['John', 'Bob', 'Ann', 'Michael']; BEGIN -- Выводим заголовок RAISE NOTICE '2022 Team:'; -- Меняем значения двух элементов массива team[2] := 'Petr'; team[3] := 'Yana'; -- Выводим обновленный массив RAISE NOTICE '%', team[i] || '. ' || team[i+1] || '. ' || team[i+2] || '. ' || team[i+3] FROM generate_subscripts(team, 1) g(i); -- Инициализируем массив новыми значениями team := ARRAY['Artem', 'Alexey', 'Sveta', 'Andrey']; -- Выводим новый массив RAISE NOTICE '%', team[i] || '. ' || team[i+1] || '. ' || team[i+2] || '. ' || team[i+3] FROM generate_subscripts(team, 1) g(i); END; $$ LANGUAGE plpgsql;"
+    },
+    {
+      "id": "51",
+      "title": "Разница в использовании массивов и курсоров",
+      "page": 23,
+      "keywords": ["массивы", "курсоры", "Oracle", "PostgreSQL", "PL/SQL", "PL/pgSQL"],
+      "text": "В Oracle PL/SQL массивы определяются как VARRAY. Пример: DECLARE team VARRAY(4) OF VARCHAR2(50); BEGIN team := VARRAY['John', 'Bob', 'Ann', 'Michael']; В PostgreSQL массивы могут быть объявлены без явного ограничения размера: DO $$ DECLARE team text[] := ARRAY['John', 'Bob', 'Ann', 'Michael']; BEGIN RAISE NOTICE '%', team[1], team[2], team[3], team[4]; END; $$ LANGUAGE plpgsql. Для курсоров в Oracle используется явное определение: DECLARE CURSOR emp_cursor IS SELECT first_name, last_name FROM employees; BEGIN OPEN emp_cursor; LOOP FETCH emp_cursor INTO v_employee; EXIT WHEN emp_cursor%NOTFOUND; DBMS_OUTPUT.PUT_LINE(v_employee.first_name || ' ' || v_employee.last_name); END LOOP; CLOSE emp_cursor; END;. В PostgreSQL курсоры могут быть использованы с блоками DO: DO $$ DECLARE emp_cursor CURSOR FOR SELECT first_name, last_name FROM employees; v_employee RECORD; BEGIN OPEN emp_cursor; LOOP FETCH emp_cursor INTO v_employee; EXIT WHEN NOT FOUND; RAISE NOTICE '% %', v_employee.first_name, v_employee.last_name; END LOOP; CLOSE emp_cursor; END; $$ LANGUAGE plpgsql."
+  },
+  {
+      "id": "52",
+      "title": "Обработка ошибок",
+      "page": 24,
+      "keywords": ["обработка ошибок", "Oracle", "PostgreSQL"],
+      "text": "В Oracle PL/SQL используется блок EXCEPTION для обработки ошибок: BEGIN ... EXCEPTION WHEN OTHERS THEN DBMS_OUTPUT.PUT_LINE(SQLERRM); END;. В PostgreSQL PL/pgSQL используется блок EXCEPTION в сочетании с BEGIN: BEGIN ... EXCEPTION WHEN OTHERS THEN RAISE; END;"
+  },
+  {
+      "id": "53",
+      "title": "Типы данных",
+      "page": 25,
+      "keywords": ["тип данных", "Oracle", "PostgreSQL"],
+      "text": "В Oracle для хранения строк используется VARCHAR2, а в PostgreSQL - VARCHAR. Oracle также поддерживает типы данных CLOB и BLOB, тогда как PostgreSQL предлагает TEXT и BYTEA. В Oracle число с плавающей запятой обозначается FLOAT, в PostgreSQL - FLOAT8."
+  },
+  {
+      "id": "54",
+      "title": "Функции и процедуры",
+      "page": 26,
+      "keywords": ["функции", "процедуры", "Oracle", "PostgreSQL"],
+      "text": "В Oracle PL/SQL функции создаются с использованием CREATE FUNCTION и могут возвращать значения. Пример: CREATE FUNCTION get_salary(emp_id NUMBER) RETURN NUMBER IS BEGIN ... END;. В PostgreSQL PL/pgSQL также предоставляют возможность создавать функции, используя CREATE FUNCTION, с возвращаемым типом, например: CREATE FUNCTION get_salary(emp_id INT) RETURNS NUMERIC AS $$ BEGIN ... END; $$ LANGUAGE plpgsql."
+  },
+  {
+      "id": "55",
+      "title": "Триггеры",
+      "page": 27,
+      "keywords": ["триггеры", "Oracle", "PostgreSQL"],
+      "text": "В Oracle триггеры создаются с помощью CREATE TRIGGER с типом BEFORE или AFTER: CREATE TRIGGER trg_name BEFORE INSERT ON table_name FOR EACH ROW BEGIN ... END;. В PostgreSQL триггеры также создаются с CREATE TRIGGER: CREATE TRIGGER trg_name BEFORE INSERT ON table_name FOR EACH ROW EXECUTE PROCEDURE function_name();"
+  },
+  {
+      "id": "56",
+      "title": "Контекстные переменные",
+      "page": 28,
+      "keywords": ["контекстные переменные", "Oracle", "PostgreSQL"],
+      "text": "В Oracle можно использовать контекстные переменные с DBMS_SESSION для установки параметров сессии. В PostgreSQL контекст переменных устанавливается на уровне транзакции через SET и GET для переменных, хранящихся в памяти."
+  },
+  {
+      "id": "58",
+      "title": "Контекстные переменные",
+      "page": 28,
+      "keywords": ["контекстные переменные", "Oracle", "PostgreSQL"],
+      "text": "В Oracle можно использовать контекстные переменные с DBMS_SESSION для установки параметров сессии. В PostgreSQL контекст переменных устанавливается на уровне транзакции через SET и GET для переменных, хранящихся в памяти."
+  },
+  {
+      "id": "59",
+      "title": "Работа с JSON",
+      "page": 29,
+      "keywords": ["JSON", "Oracle", "PostgreSQL"],
+      "text": "В Oracle работа с JSON осуществляется через функции JSON_OBJECT и JSON_QUERY: SELECT JSON_OBJECT('key' VALUE value) FROM table;. В PostgreSQL поддерживается JSON и JSONB типы данных, и работа с ними осуществляется через оператор ->: SELECT data->'key' FROM table;"
+  },
+  {
+      "id": "60",
+      "title": "Агрегационные функции",
+      "page": 30,
+      "keywords": ["агрегация", "функции", "Oracle", "PostgreSQL"],
+      "text": "В Oracle агрегирующие функции, такие как SUM и AVG, могут быть использованы в SQL-запросах: SELECT SUM(salary) FROM employees;. В PostgreSQL эти же функции работают аналогично: SELECT SUM(salary) FROM employees;"
+  },
+  {
+      "id": "61",
+      "title": "Подзапросы",
+      "page": 31,
+      "keywords": ["подзапросы", "Oracle", "PostgreSQL"],
+      "text": "В Oracle подзапрос может использоваться в SELECT, WHERE и FROM: SELECT * FROM employees WHERE salary > (SELECT AVG(salary) FROM employees);. В PostgreSQL аналогичный синтаксис: SELECT * FROM employees WHERE salary > (SELECT AVG(salary) FROM employees);"
+  },
+  {
+      "id": "62",
+      "title": "Транзакции",
+      "page": 32,
+      "keywords": ["транзакции", "Oracle", "PostgreSQL"],
+      "text": "В Oracle транзакции начинаются автоматически и завершаются с помощью COMMIT или ROLLBACK: BEGIN ... COMMIT;. В PostgreSQL аналогично используются команды BEGIN, COMMIT и ROLLBACK для управления транзакциями."
+  },
+  {
+      "id": "63",
+      "title": "Управление пользователями",
+      "page": 33,
+      "keywords": ["пользователи", "пермишены", "Oracle", "PostgreSQL"],
+      "text": "В Oracle управление пользователями осуществляется с помощью CREATE USER и GRANT: CREATE USER username IDENTIFIED BY password; GRANT SELECT ON table TO username;. В PostgreSQL используются аналогичные команды: CREATE USER username WITH PASSWORD 'password'; GRANT SELECT ON table TO username;"
+  },
+  {
+      "id": "64",
+      "title": "Портирование операции с OUT параметрами в PL/pgSQL",
+      "page": 33,
+      "keywords": ["OUT параметры", "строковая манипуляция", "PL/SQL", "PL/pgSQL"],
+      "text": "Oracle PL/SQL процедура для разбора URL и возврата хоста, пути и запроса была переведена на PL/pgSQL. В Oracle был использован параметр OUT, а в PostgreSQL аналогичный функционал был реализован через RETURN значения в функции."
+  },
+  {
+      "id": "65",
+      "title": "Портирование процедуры создания задания из PL/SQL в PL/pgSQL",
+      "page": 34,
+      "keywords": ["создание задания", "исключения", "PL/SQL", "PL/pgSQL"],
+      "text": "Процедура из Oracle использовала блоки управления транзакциями и обработки исключений. В PL/pgSQL блока RAISE и EXCEPTION были адаптированы под особенности PostgreSQL, с применением встроенных исключений."
+  },
+  {
+      "id": "66",
+      "title": "Обработка исключений в PL/pgSQL",
+      "page": 35,
+      "keywords": ["исключения", "обработка ошибок", "PL/pgSQL"],
+      "text": "В PL/pgSQL при обработке исключений все изменения базы данных автоматически откатываются с момента начала блока. Это упрощает портирование процедуры, использующей SAVEPOINT и ROLLBACK."
+  },
+  {
+      "id": "67",
+      "title": "Использование EXECUTE в PL/pgSQL",
+      "page": 36,
+      "keywords": ["EXECUTE", "динамический SQL", "PL/pgSQL"],
+      "text": "В PL/pgSQL команда EXECUTE требует использования функций quote_literal и quote_ident для предотвращения ошибок при динамическом SQL. Проверяйте правильность использования этих функций."
+  },
+  {
+      "id": "68",
+      "title": "Оптимизация функций PL/pgSQL",
+      "page": 37,
+      "keywords": ["оптимизация", "функции", "PL/pgSQL"],
+      "text": "PostgreSQL предоставляет модификаторы для оптимизации функций: 'STRICT' и 'IMMUTABLE' для определения поведения функций. Используйте эти атрибуты для повышения производительности и предсказуемости функций."
+  },
+  {
+      "id": "69",
+      "title": "Функции инструмента для поиска подстрок",
+      "page": 38,
+      "keywords": ["instr", "строковые функции", "PL/pgSQL"],
+      "text": "Для упрощения портирования функций Oracle вы можете создать функции, которые имитируют семейство instr. Эти функции поддерживают различные параметры для поиска подстрок."
+  },
+  {
+      "id": "70",
+      "title": "Инструкция по использованию функции instr",
+      "page": 39,
+      "keywords": ["instr", "поиск подстрок", "функции", "PL/pgSQL"],
+      "text": "Функция instr в PL/pgSQL имитирует поведение Oracle. Она позволяет искать в строке первую или n-ую подстроку, начиная с определенного индекса. Возвращает позицию найденной подстроки или 0, если подстрока не найдена."
+  },
+  {
+      "id": "71",
+      "title": "Поддержка опциональных параметров в функциях",
+      "page": 40,
+      "keywords": ["опциональные параметры", "функции", "PL/pgSQL"],
+      "text": "В PL/pgSQL вы можете создавать функции с опциональными параметрами, что позволяет гибче управлять их поведением. Необходимая логика должна быть реализована внутри функции для обработки отсутствующих значений."
+  },
+  {
+      "id": "72",
+      "title": "Комбинирование SQL и PL/pgSQL",
+      "page": 41,
+      "keywords": ["SQL", "PL/pgSQL", "интеграция", "базы данных"],
+      "text": "В PL/pgSQL можно комбинировать SQL и PL/pgSQL для создания более сложной логики. Используйте EXECUTE для выполнения динамических запросов и интеграции с существующими базами данных."
+  },
+  {
+      "id": "73",
+      "title": "Улучшение производительности с помощью индексов",
+      "page": 42,
+      "keywords": ["индексы", "производительность", "SQL", "базы данных"],
+      "text": "Использование индексов в PostgreSQL критически важно для повышения производительности запросов. Позаботьтесь о правильном индексировании таблиц для улучшения быстродействия функций."
+  },
+  {
+      "id": "74",
+      "title": "Типы данных и их влияние на производительность",
+      "page": 43,
+      "keywords": ["типы данных", "производительность", "PL/pgSQL"],
+      "text": "Выбор правильных типов данных в PostgreSQL может значительно повлиять на производительность. Используйте типы, которые оптимально подходят для ваших данных и предпочтений по производительности."
+  },
+  {
+      "id": "75",
+      "title": "Управление транзакциями в PL/pgSQL",
+      "page": 44,
+      "keywords": ["транзакции", "PL/pgSQL", "управление"],
+      "text": "Управление транзакциями в PL/pgSQL может быть реализовано с помощью блоков BEGIN и COMMIT. Это позволяет контролировать целостность данных и корректность операций."
+  },
+  {
+      "id": "76",
+      "title": "Использование триггеров в PL/pgSQL",
+      "page": 45,
+      "keywords": ["триггеры", "PL/pgSQL", "автоматизация"],
+      "text": "Триггеры в PL/pgSQL позволяют автоматически выполнять действия при изменении данных в таблицах. Определите триггеры для вставок, обновлений и удалений, чтобы автоматизировать бизнес-логику."
+  },
+  {
+      "id": "77",
+      "title": "Создание пользовательских типов данных",
+      "page": 46,
+      "keywords": ["пользовательские типы", "данные", "PL/pgSQL"],
+      "text": "В PostgreSQL можно создавать пользовательские типы данных, что позволяет моделировать сложные конструкции данных. Используйте CREATE TYPE для определения новых типов, соответствующих вашим требованиям."
+  },
+  {
+      "id": "78",
+      "title": "Работа с массивами в PL/pgSQL",
+      "page": 47,
+      "keywords": ["массивы", "PL/pgSQL", "обработка данных"],
+      "text": "PL/pgSQL поддерживает работа с массивами, что позволяет эффективно обрабатывать множества значений. Используйте массивные типы для хранения и манипуляции данными в функциях."
+  },
+  {
+      "id": "79",
+      "title": "Использование курсоров",
+      "page": 48,
+      "keywords": ["курсор", "PL/pgSQL", "поиск данных"],
+      "text": "Курсоры в PL/pgSQL позволяют поэлементно обрабатывать результаты запросов. Определите курсор и используйте FETCH для получения данных, чтобы управлять большими наборами результатов."
+  },
+  {
+      "id": "80",
+      "title": "Обработка JSON в PL/pgSQL",
+      "page": 49,
+      "keywords": ["JSON", "PL/pgSQL", "передача данных"],
+      "text": "PostgreSQL предлагает отличные возможности для работы с JSON. Используйте функции JSON для парсинга и манипуляции данными, чтобы интегрировать JSON в вашу бизнес-логике."
+  },
+  {
+      "id": "81",
+      "title": "Оптимизация запросов через план выполнения",
+      "page": 50,
+      "keywords": ["план выполнения", "оптимизация", "запросы"],
+      "text": "Проанализируйте план выполнения ваших запросов с помощью EXPLAIN. Это поможет найти узкие места и оптимизировать запросы для повышения производительности."
+  },
+  {
+    "id": "82",
+    "title": "Использование таблицы DUAL в Oracle и её эквивалент в PostgreSQL",
+    "page": 51,
+    "keywords": ["DUAL", "Oracle", "PostgreSQL"],
+    "text": "В Oracle таблица DUAL используется для выполнения запросов без необходимости в реальных данных. В PostgreSQL нет аналогичной таблицы; вместо этого можно выполнять запросы напрямую, например, SELECT 1 + 1;"
+  },
+  {
+    "id": "83",
+    "title": "Flashback Query / Запросы Flashback",
+    "page": 52,
+    "keywords": ["Flashback", "Oracle", "PostgreSQL"],
+    "text": "В Oracle Flashback Query позволяет выполнять запросы к данным, как они выглядели в определенный момент времени, например: `SELECT * FROM your_table AS OF TIMESTAMP (SYSTIMESTAMP - INTERVAL '1' HOUR);`. В PostgreSQL нет встроенной функции Flashback, но можно использовать: `SELECT * FROM your_table WHERE your_timestamp_column < NOW() - INTERVAL '1 hour';`."
+  },
+  {
+    "id": "84",
+    "title": "Partitioning / Партиционирование",
+    "page": 53,
+    "keywords": ["Partitioning", "Oracle", "PostgreSQL"],
+    "text": "Oracle поддерживает сложное партиционирование, включая диапазоны и списки, например: `CREATE TABLE your_table (id NUMBER, data VARCHAR2(100)) PARTITION BY RANGE (id) (PARTITION p1 VALUES LESS THAN (100), PARTITION p2 VALUES LESS THAN (200));`. PostgreSQL поддерживает партиционирование с версии 10: `CREATE TABLE your_table (id SERIAL, data TEXT) PARTITION BY RANGE (id); CREATE TABLE your_table_p1 PARTITION OF your_table FOR VALUES FROM (1) TO (100);`."
+  },
+  {
+    "id": "85",
+    "title": "Oracle Sequence / Последовательность Oracle",
+    "page": 54,
+    "keywords": ["Sequence", "Oracle", "PostgreSQL"],
+    "text": "Oracle позволяет гибко управлять последовательностями, создавая их через: `CREATE SEQUENCE your_sequence START WITH 1 INCREMENT BY 1;`. В PostgreSQL используется SERIAL для создания последовательностей: `CREATE TABLE your_table (id SERIAL PRIMARY KEY, data TEXT);`."
+  },
+  {
+    "id": "86",
+    "title": "PL/SQL",
+    "page": 55,
+    "keywords": ["PL/SQL", "Oracle", "PostgreSQL"],
+    "text": "PL/SQL в Oracle позволяет создавать процедуры, например: `CREATE OR REPLACE PROCEDURE example AS BEGIN NULL; END;`. В PostgreSQL аналогичный код будет выглядеть так: `CREATE OR REPLACE FUNCTION example() RETURNS VOID AS $$ BEGIN RETURN; END; $$ LANGUAGE plpgsql;`."
+  },
+  {
+    "id": "87",
+    "title": "Materialized Views / Материализованные представления",
+    "page": 56,
+    "keywords": ["Materialized Views", "Oracle", "PostgreSQL"],
+    "text": "Oracle позволяет работать с материализованными представлениями с автоматическим обновлением с помощью: `CREATE MATERIALIZED VIEW mv AS SELECT * FROM your_table;`. В PostgreSQL: `CREATE MATERIALIZED VIEW mv AS SELECT * FROM your_table; REFRESH MATERIALIZED VIEW mv;`."
+  },
+  {
+    "id": "88",
+    "title": "Advanced Queuing (AQ) / Расширенные очереди (AQ)",
+    "page": 57,
+    "keywords": ["AQ", "Oracle", "PostgreSQL"],
+    "text": "В Oracle встроенная поддержка очередей сообщений позволяет использовать: `DBMS_AQ.ENQUEUE(...);` для добавления сообщений в очередь. В PostgreSQL нет встроенной системы AQ, но можно использовать сторонние решения, такие как pg_notify, например: `SELECT pg_notify('channel', 'message');`."
+  },
+  {
+    "id": "89",
+    "title": "Data Guard",
+    "page": 58,
+    "keywords": ["Data Guard", "Oracle", "PostgreSQL"],
+    "text": "Oracle обеспечивает высокую доступность с помощью Data Guard, которая позволяет настраивать резервные базы данных и выполнять автоматическое переключение. В PostgreSQL поддержка репликации осуществляется через команды: `CREATE REPLICA ...;`, однако настройка может требовать дополнительных шагов, таких как настройка WAL (Write Ahead Log)."
+  },
+  {
+    "id": "90",
+    "title": "MVCC (Multi-Version Concurrency Control) / MVCC (Контроль многоверсионной конкурентности)",
+    "page": 59,
+    "keywords": ["MVCC", "Oracle", "PostgreSQL"],
+    "text": "Oracle и PostgreSQL используют MVCC для управления транзакциями. В PostgreSQL механизм MVCC встроен в систему и позволяет одновременно выполнять чтение и запись. В Oracle реализация MVCC базируется на версии строк, с помощью которых управляющие транзакции используют: `SELECT ... FOR UPDATE` для блокировки строк, при этом контроль версий осуществляется на уровне хранения."
+  },
+  {
+    "id": "91",
+    "title": "Типы данных в Oracle и PostgreSQL / Data Types in Oracle and PostgreSQL",
+    "page": 60,
+    "keywords": ["Типы данных", "Oracle", "PostgreSQL"],
+    "text": "В Oracle типы данных `VARCHAR2` и `CHAR` используются для строк, в то время как в PostgreSQL аналогичные типы - `VARCHAR` и `TEXT`, где `TEXT` может хранить строки произвольной длины. Для хранения чисел в Oracle используется тип `NUMBER`, который поддерживает большой диапазон, тогда как в PostgreSQL для целых и фиксированных чисел применяются `INTEGER`, `BIGINT`, `NUMERIC` и `DECIMAL`. Для хранения даты и времени в Oracle существует тип `DATE`, в то время как в PostgreSQL присутствуют `DATE`, `TIME`, `TIMESTAMP` и `INTERVAL`. В Oracle нет отдельного булева типа, в то время как PostgreSQL предлагает тип `BOOLEAN` с возможными значениями TRUE, FALSE и NULL. Также в Oracle используется `LONG` для хранения длинных строк, тогда как в PostgreSQL для этой цели применяется `TEXT`. Наконец, для хранения двоичных данных Oracle использует `BLOB`, в то время как в PostgreSQL аналогичный тип данных - `BYTEA`."
+  },
+  {
+    "id": "92",
+    "title": "Специфические функции и операторы Oracle и PostgreSQL",
+    "page": 61,
+    "keywords": ["функции", "операторы", "Oracle", "PostgreSQL", "портирование"],
+    "text": "При портировании специфических функций и операторов между Oracle и PostgreSQL необходимо учитывать различные синтаксические и функциональные отличия. Ниже приведены ключевые моменты для различных категорий функций: \n\n1. **Строковые функции**:  \n   - Функция `SUBSTR` в Oracle эквивалентна `SUBSTRING` в PostgreSQL.  \n   - Конкатенация строк в Oracle осуществляется через оператор `||`, который также используется в PostgreSQL.  \n   - Функция `INSTR` в Oracle может быть заменена на `POSITION` в PostgreSQL.  \n\n2. **Функции работы с датами**:  \n   - Для получения текущей даты в Oracle используется функция `SYSDATE`, тогда как в PostgreSQL - `CURRENT_TIMESTAMP`.  \n   - `ADD_MONTHS` в Oracle можно заменить на `DATE + INTERVAL 'n months'` в PostgreSQL.  \n   - Параметры дат в функции `EXTRACT` могут отличаться: например, `EXTRACT(YEAR FROM date)` в PostgreSQL.  \n\n3. **Аггрегатные функции**:  \n   - Функция `LISTAGG` в Oracle доступна в PostgreSQL начиная с версии 9.4 через `STRING_AGG`.  \n\n4. **Управление транзакциями**:  \n   - Oracle использует `COMMIT` и `ROLLBACK`, что также поддерживается в PostgreSQL, однако обработка исключений может отличаться: `RAISE EXCEPTION` в PostgreSQL заменяет механизм обработки в Oracle.  \n\n5. **Динамический SQL**:  \n   - Для выполнения динамического SQL в PL/SQL используется `EXECUTE IMMEDIATE`, а в PL/pgSQL - просто `EXECUTE`.  \n   - Перед выполнением SQL команд, строки должны быть обработаны функциями `quote_literal` и `quote_ident` для предотвращения ошибок и SQL-инъекций.  \n\n6. **Параметры и возвращаемые значения**:  \n   - В Oracle параметры могут быть входными (IN), выходными (OUT) и входными/выходными (IN OUT), тогда как PostgreSQL применяет только входные параметры и возвращаемые значения.  \n   - `RETURN` в Oracle заменяется на `RETURNS` в PostgreSQL.  \n\nСистематическое преобразование этих функций и операторов обеспечит более гладкий переход от одной СУБД к другой."
+  },
+  {
+    "id": "93",
+    "title": "Сравнение таблиц и пространств таблиц в Oracle и PostgreSQL",
+    "page": 62,
+    "keywords": ["таблицы", "пространства таблиц", "Oracle", "PostgreSQL"],
+    "text": "В PostgreSQL аналог концепции таблиц и пространств таблиц в Oracle представлен следующим образом: \n\n1. **Таблицы**:  \n   - В Oracle используется поле `table_name` в представлении `user_tables`; в PostgreSQL эквивалентом является `table_name` в представлении `information_schema.tables`. \n\n2. **Пространства таблиц (tablespaces)**:  \n   - В Oracle это `tablespace_name`, а в PostgreSQL аналогичная информация хранится в таблице `pg_tablespace`, где используется `spcname` для обозначения имени пространства таблиц.  \n\nТаким образом, основное отличие заключается в том, как эти концепции реализованы и представлены в системах: Oracle использует представление `user_tables` и `user_tablespaces`, а PostgreSQL — `information_schema.tables` и `pg_tablespace`."
+  },
+  {
+    "id": "94",
+    "title": "Использование table_name и tablespace_name в PostgreSQL",
+    "page": 63,
+    "keywords": ["table_name", "tablespace_name", "PostgreSQL", "таблицы", "пространства таблиц"],
+    "text": "В PostgreSQL `table_name` и `tablespace_name` представляют собой важные элементы для работы с таблицами и пространствами таблиц:\n\n1. **table_name**:\n   - Это имя таблицы, используемое при создании, изменении или удалении таблицы. При запросах к системным представлениям, таким как `information_schema.tables`, вы можете фильтровать результаты по `table_name`. Например:\n     ```sql\n     SELECT * FROM information_schema.tables WHERE table_name = 'employees';\n     ```\n\n2. **tablespace_name**:\n   - Это имя пространства таблиц, в котором располагается ваша таблица. По умолчанию PostgreSQL использует пространство `pg_default`. Чтобы указать пространство таблиц при создании таблицы, используйте опцию `TABLESPACE`. Пример:\n     ```sql\n     CREATE TABLE employees (\n         employee_id SERIAL PRIMARY KEY,\n         first_name VARCHAR(50)\n     ) TABLESPACE my_tablespace;\n     ```\n   - Чтобы получить информацию о пространствах таблиц, можно использовать запрос к `pg_tablespace`:\n     ```sql\n     SELECT spcname AS tablespace_name FROM pg_tablespace;\n     ```\n\nТаким образом, правильное использование `table_name` и `tablespace_name` позволяет организовать данные эффективно и оптимизировать работу с базой данных в PostgreSQL."
+  }
+]

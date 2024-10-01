@@ -1,0 +1,117 @@
+x-settings:
+  image_versions:
+    RABBITMQ: &rabbitmq_image rabbitmq:3.8.16-management
+    DB: &db_image postgres:14-alpine
+    ADMINER: &adminer_image adminer:4.7.9
+
+  logging: &default-logging
+    driver: "json-file"
+    options:
+      max-size: "100m"
+      max-file: "5"
+
+services:
+  rabbitmq:
+    image: *rabbitmq_image
+    container_name: rabbitmq
+    volumes:
+      - ./data/rabbitmq:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
+    ports:
+      - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    labels:
+      NAME: rabbitmq
+    restart: unless-stopped
+    logging: *default-logging
+
+  api_gateway:
+    image: generating_clips:latest
+    build: .
+    restart: always
+    working_dir: /src
+    environment:
+      - S3_ACCESS=9ecfcfd85eb04c72b422d86254037270
+      - S3_SECRET=68909b2ae39146f0b56b43286e32e5bf
+      - S3_URL=https://s3.ru-1.storage.selcloud.ru
+      - RABBITMQ_USER=example
+      - RABBITMQ_PASS=example
+      - RABBITMQ_VHOST=/
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - DB_DATABASE=example
+      - DB_USER=example
+      - DB_PASSWORD=example
+    command: bash -c "uvicorn main:app --host=0.0.0.0 --port 8005 --log-level=info"
+    volumes:
+      - ./src:/src
+      - ./fine_tuned_mbart:/src/fine_tuned_mbart
+    ports:
+      - "8005:8005"
+    depends_on:
+      - rabbitmq
+
+  separate_worker:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    runtime: nvidia
+    image: generating_clips:latest
+    container_name: separate_worker
+    restart: always
+    working_dir: /src
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - S3_ACCESS=9ecfcfd85eb04c72b422d86254037270
+      - S3_SECRET=68909b2ae39146f0b56b43286e32e5bf
+      - S3_URL=https://s3.ru-1.storage.selcloud.ru
+      - RABBITMQ_USER=example
+      - RABBITMQ_PASS=example
+      - RABBITMQ_VHOST=/
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - DB_DATABASE=example
+      - DB_USER=example
+      - DB_PASSWORD=example
+    command: bash -c "python3 worker_main.py"
+    volumes:
+      - ./src:/src
+      - ./fine_tuned_mbart:/src/fine_tuned_mbart
+    depends_on:
+      - rabbitmq
+
+  db:
+    image: *db_image
+    container_name: db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/database/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    restart: unless-stopped
+    logging: *default-logging
+
+  adminer:
+    image: *adminer_image
+    container_name: adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    restart: unless-stopped
+    logging: *default-logging
