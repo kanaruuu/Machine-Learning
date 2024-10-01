@@ -1,2 +1,14 @@
 # Machine-Learning
-Some of my experience
+Used:  
+- pandas  
+- numpy  
+- streamlit  
+- tensorflow  
+- matplotlib  
+- seaborn  
+- sklearn  
+- pytorch  
+- nltk  
+- razdel  
+- navec  
+
